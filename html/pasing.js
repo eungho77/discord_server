@@ -11,6 +11,14 @@ const parsing = {
         }
     },
 
+    getData: async (url) => {
+        try {
+            return await axios.get(encodeURI(url));
+        } catch (e) {
+            console.error(e);
+        }
+    },
+
     profile_ability_basic: function($) {
         const basic = $("div.profile-ability-basic:nth-child(1) > ul > li");
         const basic_array = {}; // 기본 특성

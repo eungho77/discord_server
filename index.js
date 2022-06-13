@@ -111,8 +111,28 @@ app.get('/api/inven/challenge', async (req, res) => {
     Challenge.raid = Challenge_raid_list
     Challenge.abyss = Challenge_raid_abyss
 
-
     res.send(Challenge)
+});
+
+app.get('/api/shop/search', async (req, res) => {
+    let itmes = await parsing.getData("http://152.70.248.4:5000/tradeplus/" + req.query.items)
+    const param = itmes.data
+    let result = {}
+
+    if (param.Result === "Success"){
+        if (param.Data.length > 1) {
+            result.items = param.Data
+            result.mode = param.Result
+        } else {
+            result.items = param.FirstItem[0]
+            result.mode = param.Result
+        }
+    } else {
+        result.items = param.Reason
+        result.mode = param.Result
+    }
+
+    res.send(result)
 });
 
 var server = app.listen(server_port, function()  {
