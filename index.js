@@ -8,38 +8,50 @@ const app = express();
 
 /* GET home page. */
 app.get('/api/info', async (req, res) => {
-    const param = {};
-    const html = await parsing.getHtml("https://m-lostark.game.onstove.com/Profile/Character/" + req.query.nickname);
-    const $ = cheerio.load(html.data);
+    const param = {}
+    const html = await parsing.getHtml("https://m-lostark.game.onstove.com/Profile/Character/" + req.query.nickname)
+    const $ = cheerio.load(html.data)
 
-    param.nickname = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[1]; // 로스트아크 닉네임
-    param.server = $("dd.myinfo__character > div.wrapper-define > dl.define:nth-child(1) > dd").text().split("@")[1]; // 서버
-    param.job = $("dd.myinfo__character > div.wrapper-define > dl.define:nth-child(2) > dd").text() // 직업
-    param.expedition = $("div.myinfo__contents-level > div.wrapper-define:nth-child(1) > dl.define > dd.level").text(); // 원정대
-    param.level = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[0]; // 로스트아크 레벨
-    param.itemLevel = $("div.myinfo__contents-level > div.wrapper-define:nth-child(2) > dl.item > dd.level").text(); // 장착 아이템
+    // 서버 점검 알림
+    const loa = await parsing.getHtml("https://m-lostark.game.onstove.com")
+    const $1 = cheerio.load(loa.data)
 
-    let basic_array = parsing.profile_ability_basic($); // 최대 생명력, 전투 공격력
-    let battle_array = parsing.profile_ability_battle($); // 치명, 특화, 제압, 신속, 인내, 숙련
-    let engrave_array = parsing.profile_ability_engrave($); // 각인
-    let jewel_array = await parsing.profile_jewel($); // 카드
-    let card_array = parsing.card_tab($); // 카드
-    let expand_array = await parsing.expand_character_list($); // 보유 캐릭터
+    const mode = $1( "head > title").text() != "로스트아크 - 서비스 점검" ? true : false
+
+    if(mode) {
+        param.nickname = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[1]; // 로스트아크 닉네임
+        param.server = $("dd.myinfo__character > div.wrapper-define > dl.define:nth-child(1) > dd").text().split("@")[1]; // 서버
+        param.job = $("dd.myinfo__character > div.wrapper-define > dl.define:nth-child(2) > dd").text() // 직업
+        param.expedition = $("div.myinfo__contents-level > div.wrapper-define:nth-child(1) > dl.define > dd.level").text(); // 원정대
+        param.level = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[0]; // 로스트아크 레벨
+        param.itemLevel = $("div.myinfo__contents-level > div.wrapper-define:nth-child(2) > dl.item > dd.level").text(); // 장착 아이템
+        param.mode = mode;
+
+        let basic_array = parsing.profile_ability_basic($); // 최대 생명력, 전투 공격력
+        let battle_array = parsing.profile_ability_battle($); // 치명, 특화, 제압, 신속, 인내, 숙련
+        let engrave_array = parsing.profile_ability_engrave($); // 각인
+        let jewel_array = await parsing.profile_jewel($); // 카드
+        let card_array = parsing.card_tab($); // 카드
+        let expand_array = await parsing.expand_character_list($); // 보유 캐릭터
 
 
-    // 기본 특성
-    param.basic = {
-        attack: basic_array[0], // 전투 공격력
-        hp: basic_array[1] // 최대 생명력
-    };
+        // 기본 특성
+        param.basic = {
+            attack: basic_array[0], // 전투 공격력
+            hp: basic_array[1] // 최대 생명력
+        };
 
-    param.battle = battle_array;
-    param.engrave = engrave_array; // 각인 효과
-    param.card = card_array; // 카드
-    param.expand = expand_array // 보유 캐릭터
-    param.jewel = jewel_array; // 보석
+        param.battle = battle_array;
+        param.engrave = engrave_array; // 각인 효과
+        param.card = card_array; // 카드
+        param.expand = expand_array // 보유 캐릭터
+        param.jewel = jewel_array; // 보석
 
-    console.log(param.nickname + "님이 조회하셨습니다.");
+        console.log(param.nickname + "님이 조회하셨습니다.");
+    } else {
+        param.mode = mode
+        param.title = "서버 점검 중입니다."
+    }
     console.log(param)
 
     res.send(param)
@@ -50,13 +62,24 @@ app.get('/api/internal_stability', async (req, res) => {
     const html = await parsing.getHtml("https://m-lostark.game.onstove.com/Profile/Character/" + req.query.nickname);
     const $ = cheerio.load(html.data);
 
-    let life_arryy = parsing.profile_skill_life($); // 생활스킬
-    let collection_arary = await parsing.profile_collection(req.query.nickname)
+    // 서버 점검 알림
+    const loa = await parsing.getHtml("https://m-lostark.game.onstove.com")
+    const $1 = cheerio.load(loa.data)
 
-    param.life = life_arryy; // 생활스킬
-    param.collection = collection_arary;
+    const mode = $1( "head > title").text() != "로스트아크 - 서비스 점검" ? true : false
 
-    console.log(req.query.nickname + "님이 조회하셨습니다.");
+    if(mode) {
+        let life_arryy = parsing.profile_skill_life($); // 생활스킬
+        let collection_arary = await parsing.profile_collection(req.query.nickname)
+
+        param.life = life_arryy; // 생활스킬
+        param.collection = collection_arary;
+
+        console.log(req.query.nickname + "님이 조회하셨습니다.");
+    } else {
+        param.mode = mode
+        param.title = "서버 점검 중입니다."
+    }
     console.log(param)
 
     res.send(param)
@@ -116,6 +139,7 @@ app.get('/api/inven/challenge', async (req, res) => {
 
 app.get('/api/shop/search', async (req, res) => {
     let itmes = await parsing.getData("http://152.70.248.4:5000/tradeplus/" + req.query.items)
+
     const param = itmes.data
     let result = {}
 

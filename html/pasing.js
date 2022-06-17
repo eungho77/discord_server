@@ -73,6 +73,7 @@ const parsing = {
             character_list.push(param)
         });
         await Promise.all(promises)
+        character_list.sort(arrOrder("level"))
         return character_list
     },
 
@@ -176,6 +177,17 @@ const parsing = {
         })
 
         return jewel_list
+    }
+}
+
+function arrOrder(key) {
+    return function (a, b) {
+        if (a[key] > b[key]) {
+            return -1;
+        }
+        if (a[key] < b[key]) {
+            return 1;
+        }
     }
 }
 
