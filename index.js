@@ -156,6 +156,8 @@ app.get('/api/shop/search', async (req, res) => {
         result.mode = param.Result
     }
 
+    console.log(result)
+
     res.send(result)
 });
 
