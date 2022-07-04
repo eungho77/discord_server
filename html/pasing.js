@@ -177,6 +177,29 @@ const parsing = {
         })
 
         return jewel_list
+    },
+
+    shop_mari: async($) => {
+        let result = [];
+        const count = [1, 2]
+
+        for(const a of count){
+            let mari_list = [];
+            $("div#lui-tab1-"+ a +" > ul > li").each((i, v) => {
+                const param = {
+                    popularity: ($(v).find('span.icon--shop-popular').text() === "인기") ? $(v).find('span.icon--shop-popular').text() : null,
+                    item: $(v).find('div.wrapper > span.item-name').text(),
+                    amount: $(v).find('div.wrapper > div.area-amount > span.amount').text()
+                };
+                mari_list.push(param)
+            })
+            result.push({
+                "mode": true,
+                "type": $("div.lui-tab__menu > a:nth-child("+ a +")").text(),
+                mari_list: mari_list
+            })
+        }
+        return result
     }
 }
 

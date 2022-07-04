@@ -149,6 +149,7 @@ app.get('/api/shop/search', async (req, res) => {
             result.mode = param.Result
         } else {
             result.items = param.FirstItem[0]
+
             result.mode = param.Result
         }
     } else {
@@ -161,9 +162,20 @@ app.get('/api/shop/search', async (req, res) => {
     res.send(result)
 });
 
+app.get('/api/shop/mari', async (req, res) => {
+    const html = await parsing.getHtml("https://lostark.game.onstove.com/Shop#mari")
+    const $ = cheerio.load(html.data)
+    const result = await parsing.shop_mari($)
+
+    console.log(result)
+
+    res.send(result)
+});
+
 var server = app.listen(server_port, function()  {
     var host = server.address().address;
     var port  = server.address().port;
 
     console.log('Server is working : PORT - ', port);
 })
+
