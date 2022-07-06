@@ -10,7 +10,6 @@ const parsing = {
             console.error(e);
         }
     },
-
     getData: async (url) => {
         try {
             return await axios.get(encodeURI(url));
@@ -18,7 +17,6 @@ const parsing = {
             console.error(e);
         }
     },
-
     profile_ability_basic: function($) {
         const basic = $("div.profile-ability-basic:nth-child(1) > ul > li");
         const basic_array = {}; // 기본 특성
@@ -29,7 +27,6 @@ const parsing = {
 
         return basic_array;
     },
-
     profile_ability_battle: function($) {
         const battle = $("div.profile-ability-basic:nth-child(2) > ul > li");
         const battle_list = []; // 기본 특성
@@ -44,7 +41,6 @@ const parsing = {
 
         return battle_list;
     },
-
     profile_ability_engrave: function($) {
         // 특정 캐릭터마다 33333일 수도 있고 333321일 수도 있고 3333일 수도 있기 때문에 리스트로 설정
         const engrave = $("div.profile-ability-engrave > ul > li");
@@ -61,7 +57,6 @@ const parsing = {
 
         return engrave_list;
     },
-
     expand_character_list: async ($) => {
         const list_nickname = $("div.myinfo__character--wrapper2 > ul > li");
         var character_list = [];
@@ -76,7 +71,6 @@ const parsing = {
         character_list.sort(arrOrder("level"))
         return character_list
     },
-
     character_list_search: function(html, nickname) {
         let param = {};
 
@@ -89,7 +83,6 @@ const parsing = {
 
         return param;
     },
-
     card_tab: function($) {
         const card = $("div#card-tab > ul > li");
         const card_list = [];
@@ -104,7 +97,6 @@ const parsing = {
 
         return card_list
     },
-
     profile_skill_life: function($) {
         const life = $("div.profile-skill-life > ul.profile-skill-life__list > li");
         const life_list = [];
@@ -119,7 +111,6 @@ const parsing = {
 
         return life_list
     },
-
     profile_collection: async(nickname) => {
         const browser = await puppeteer.launch({
             headless: true,
@@ -160,7 +151,6 @@ const parsing = {
 
         return collection_list
     },
-
     profile_jewel: async($) => {
         const jewel = $("div#profile-jewel > ul > li");
         // const jewel2 = $("div#profile-jewel > div.jewel-effect__wrap > div.jewel__wrap > span");
@@ -178,7 +168,6 @@ const parsing = {
 
         return jewel_list
     },
-
     shop_mari: async($) => {
         let result = [];
         const count = [1, 2]
@@ -200,10 +189,21 @@ const parsing = {
             })
         }
         return result
+    },
+    adventureisland: async ($) => {
+        let result = [];
+
+        const li = $('ul.today-quest-list > li')
+        for(let a of li) {
+            result.push({island: $(a).find('h4.island-name > span.lang-main')})
+        }
+
+
+        return result
     }
 }
 
-function arrOrder(key) {
+function  arrOrder(key) {
     return function (a, b) {
         if (a[key] > b[key]) {
             return -1;

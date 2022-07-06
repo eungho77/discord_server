@@ -19,35 +19,41 @@ app.get('/api/info', async (req, res) => {
     const mode = $1( "head > title").text() != "로스트아크 - 서비스 점검" ? true : false
 
     if(mode) {
-        param.nickname = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[1]; // 로스트아크 닉네임
-        param.server = $("dd.myinfo__character > div.wrapper-define > dl.define:nth-child(1) > dd").text().split("@")[1]; // 서버
-        param.job = $("dd.myinfo__character > div.wrapper-define > dl.define:nth-child(2) > dd").text() // 직업
-        param.expedition = $("div.myinfo__contents-level > div.wrapper-define:nth-child(1) > dl.define > dd.level").text(); // 원정대
-        param.level = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[0]; // 로스트아크 레벨
-        param.itemLevel = $("div.myinfo__contents-level > div.wrapper-define:nth-child(2) > dl.item > dd.level").text(); // 장착 아이템
-        param.mode = mode;
+        const nickname = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[1]
+        if(nickname) {
+            param.search = true
+            param.nickname = nickname; // 로스트아크 닉네임
+            param.server = $("dd.myinfo__character > div.wrapper-define > dl.define:nth-child(1) > dd").text().split("@")[1] // 서버
+            param.job = $("dd.myinfo__character > div.wrapper-define > dl.define:nth-child(2) > dd").text() // 직업
+            param.expedition = $("div.myinfo__contents-level > div.wrapper-define:nth-child(1) > dl.define > dd.level").text() // 원정대
+            param.level = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[0] // 로스트아크 레벨
+            param.itemLevel = $("div.myinfo__contents-level > div.wrapper-define:nth-child(2) > dl.item > dd.level").text() // 장착 아이템
+            param.mode = mode;
 
-        let basic_array = parsing.profile_ability_basic($); // 최대 생명력, 전투 공격력
-        let battle_array = parsing.profile_ability_battle($); // 치명, 특화, 제압, 신속, 인내, 숙련
-        let engrave_array = parsing.profile_ability_engrave($); // 각인
-        let jewel_array = await parsing.profile_jewel($); // 카드
-        let card_array = parsing.card_tab($); // 카드
-        let expand_array = await parsing.expand_character_list($); // 보유 캐릭터
+            let basic_array = parsing.profile_ability_basic($) // 최대 생명력, 전투 공격력
+            let battle_array = parsing.profile_ability_battle($) // 치명, 특화, 제압, 신속, 인내, 숙련
+            let engrave_array = parsing.profile_ability_engrave($) // 각인
+            let jewel_array = await parsing.profile_jewel($) // 카드
+            let card_array = parsing.card_tab($) // 카드
+            let expand_array = await parsing.expand_character_list($) // 보유 캐릭터
 
 
-        // 기본 특성
-        param.basic = {
-            attack: basic_array[0], // 전투 공격력
-            hp: basic_array[1] // 최대 생명력
-        };
+            // 기본 특성
+            param.basic = {
+                attack: basic_array[0], // 전투 공격력
+                hp: basic_array[1] // 최대 생명력
+            };
 
-        param.battle = battle_array;
-        param.engrave = engrave_array; // 각인 효과
-        param.card = card_array; // 카드
-        param.expand = expand_array // 보유 캐릭터
-        param.jewel = jewel_array; // 보석
-
-        console.log(param.nickname + "님이 조회하셨습니다.");
+            param.battle = battle_array
+            param.engrave = engrave_array // 각인 효과
+            param.card = card_array // 카드
+            param.expand = expand_array // 보유 캐릭터
+            param.jewel = jewel_array // 보석
+        } else {
+            param.mode = mode;
+            param.search = false
+            param.content = "닉네임이 존재하지 않거나 잘못됬을 경우 닉네임까지 치고 스페이스바 한번 눌러서 날려보세요."
+        }
     } else {
         param.mode = mode
         param.title = "서버 점검 중입니다."
@@ -168,6 +174,14 @@ app.get('/api/shop/mari', async (req, res) => {
     const result = await parsing.shop_mari($)
 
     console.log(result)
+
+    res.send(result)
+});
+
+app.get('/api/adventureisland', async (req, res) => {
+    const html = await parsing.getHtml("https://loawa.com/")
+    const $ = cheerio.load(html.data)
+    const result = await parsing.adventureisland($)
 
     res.send(result)
 });
