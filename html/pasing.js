@@ -49,7 +49,7 @@ const parsing = {
         engrave.each(function(i, v){
             param = {
                 name: $(v).find("span").text().replace(/\s/gi, "").split("Lv.")[0],
-                level: "Lv." + $(v).find("span").text().replace(/\s/gi, "").split("Lv.")[1],
+                level: $(v).find("span").text().replace(/\s/gi, "").split("Lv.")[1],
                 text: $(v).find("div.profile-ability-tooltip > p").text()
             }
             engrave_list.push(param)
@@ -68,7 +68,7 @@ const parsing = {
             character_list.push(param)
         });
         await Promise.all(promises)
-        character_list.sort(arrOrder("level"))
+        character_list.sort(arrOrder("itemLevel"))
         return character_list
     },
     character_list_search: function(html, nickname) {
@@ -89,8 +89,8 @@ const parsing = {
 
         card.each(function (i, v) {
             param = {
-                card_name: $(v).find("div.card-slot > strong > font").text(),
-                card_stone_count: $(v).find("div.card-slot").attr("data-awake")
+                name: $(v).find("div.card-slot > strong > font").text(),
+                stone_count: $(v).find("div.card-slot").attr("data-awake")
             }
             card_list.push(param);
         })
@@ -98,36 +98,38 @@ const parsing = {
         return card_list
     },
     profile_skill_life: function($) {
-        const life = $("div.profile-skill-life > ul.profile-skill-life__list > li");
-        const life_list = [];
+        let param = {}
+        const life = $("div.profile-skill-life > ul.profile-skill-life__list > li")
+        const life_list = []
 
         life.each(function(i, v){
             param = {
-                life_name: $(v).find("strong").text(),
-                life_level: $(v).find("span").text()
+                name: $(v).find("strong").text(),
+                level: $(v).find("span").text()
             }
-            life_list.push(param);
+            life_list.push(param)
         })
 
         return life_list
     },
     profile_collection: async(nickname) => {
+        let param = {}
         const browser = await puppeteer.launch({
             headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
 
-        const page = await browser.newPage();
-        await page.setRequestInterception(true);
+        const page = await browser.newPage()
+        await page.setRequestInterception(true)
         page.on('request', function(req) {
             switch (req.resourceType()) {
                 case 'stylesheet':
                 case 'font':
                 case 'image':
-                    req.abort();
+                    req.abort()
                     break;
                 default:
-                    req.continue();
+                    req.continue()
                     break;
             }
         });
@@ -142,8 +144,8 @@ const parsing = {
 
         collection.each(function(a,b){
             param = {
-                collection_name: $(b).text().replace(/[0-9]/g, "").replace(/\s$/gi, ""),
-                collection_count: $(b).find("span").text()
+                name: $(b).text().replace(/[0-9]/g, "").replace(/\s$/gi, ""),
+                count: $(b).find("span").text()
             }
 
             collection_list.push(param)
@@ -152,18 +154,23 @@ const parsing = {
         return collection_list
     },
     profile_jewel: async($) => {
+        let param = {};
         const jewel = $("div#profile-jewel > ul > li");
         // const jewel2 = $("div#profile-jewel > div.jewel-effect__wrap > div.jewel__wrap > span");
         const jewel_list = [];
 
         jewel.each(function(i, v) {
-            param1 = {
-                jewel_name: $(v).find("div.jewel_effect > strong.skill_tit").text(),
-                jewel_effect: $(v).find("div.jewel_effect > p.skill_detail").text(),
-                jewel_level: $(v).find("div.jewel > span.jewel_level").text()
+            let jewel_name = $(v).find("div.jewel_effect > strong.skill_tit").text()
+            let effect = $(v).find("div.jewel_effect > p.skill_detail").text().split(jewel_name)[1].trim()
+            let type  = effect.split(" ")[0]
+            param = {
+                name: jewel_name,
+                effect: effect,
+                type: (type == "피해") ? "멸화" : "홍염",
+                level: $(v).find("div.jewel > span.jewel_level").text()
             };
 
-            jewel_list.push(param1)
+            jewel_list.push(param)
         })
 
         return jewel_list

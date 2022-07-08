@@ -8,7 +8,7 @@ const app = express();
 
 /* GET home page. */
 app.get('/api/info', async (req, res) => {
-    const param = {}
+    let param = {}
     const html = await parsing.getHtml("https://m-lostark.game.onstove.com/Profile/Character/" + req.query.nickname)
     const $ = cheerio.load(html.data)
 
@@ -75,13 +75,22 @@ app.get('/api/internal_stability', async (req, res) => {
     const mode = $1( "head > title").text() != "로스트아크 - 서비스 점검" ? true : false
 
     if(mode) {
-        let life_arryy = parsing.profile_skill_life($); // 생활스킬
-        let collection_arary = await parsing.profile_collection(req.query.nickname)
+        const nickname = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[1]
+        if(nickname) {
+            let life_arryy = parsing.profile_skill_life($) // 생활스킬
+            let collection_arary = await parsing.profile_collection(req.query.nickname)
 
-        param.life = life_arryy; // 생활스킬
-        param.collection = collection_arary;
+            param.search = true
+            param.life = life_arryy // 생활스킬
+            param.collection = collection_arary
+            param.mode = mode
 
-        console.log(req.query.nickname + "님이 조회하셨습니다.");
+            console.log(req.query.nickname + "님이 조회하셨습니다.")
+        } else {
+            param.mode = mode
+            param.search = false
+            param.content = "닉네임이 존재하지 않거나 잘못됬을 경우 닉네임까지 치고 스페이스바 한번 눌러서 날려보세요."
+        }
     } else {
         param.mode = mode
         param.title = "서버 점검 중입니다."
@@ -97,6 +106,7 @@ app.get('/api/inven/timer', async (req, res) => {
     let lostarkTimer_list = [];
 
     const lostarkTimer = $('#lostarkTimer > div > div.bosslist > div > ul > li');
+    let param = {};
 
     lostarkTimer.each(function(i, v) {
         param = {
