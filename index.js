@@ -3,6 +3,7 @@ var express = require('express');
 const cheerio = require('cheerio');
 const { server_port } = require('./config.json')
 const { parsing } = require('./html/pasing')
+const { logger } = require('./logger/logger')
 
 const app = express();
 
@@ -19,10 +20,9 @@ app.get('/api/info', async (req, res) => {
     const mode = $1( "head > title").text() != "로스트아크 - 서비스 점검" ? true : false
 
     if(mode) {
-        const nickname = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[1]
-        if(nickname) {
+        param.nickname = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[1];
+        if(param.nickname) {
             param.search = true
-            param.nickname = nickname; // 로스트아크 닉네임
             param.server = $("dd.myinfo__character > div.wrapper-define > dl.define:nth-child(1) > dd").text().split("@")[1] // 서버
             param.job = $("dd.myinfo__character > div.wrapper-define > dl.define:nth-child(2) > dd").text() // 직업
             param.expedition = $("div.myinfo__contents-level > div.wrapper-define:nth-child(1) > dl.define > dd.level").text() // 원정대
@@ -49,16 +49,21 @@ app.get('/api/info', async (req, res) => {
             param.card = card_array // 카드
             param.expand = expand_array // 보유 캐릭터
             param.jewel = jewel_array // 보석
+
+            logger.info('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.query.nickname + '] 조회 / 성공')
         } else {
             param.mode = mode;
             param.search = false
             param.content = "닉네임이 존재하지 않거나 잘못됬을 경우 닉네임까지 치고 스페이스바 한번 눌러서 날려보세요."
+
+            logger.error('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.query.nickname + '] 조회 / 닉네임 불일치')
         }
     } else {
         param.mode = mode
         param.title = "서버 점검 중입니다."
+
+        logger.error('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.query.nickname + '] 조회 / 서버 점검')
     }
-    console.log(param)
 
     res.send(param)
 });
@@ -73,7 +78,6 @@ app.get('/api/internal_stability', async (req, res) => {
     const $1 = cheerio.load(loa.data)
 
     const mode = $1( "head > title").text() != "로스트아크 - 서비스 점검" ? true : false
-
     if(mode) {
         const nickname = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[1]
         if(nickname) {
@@ -85,17 +89,20 @@ app.get('/api/internal_stability', async (req, res) => {
             param.collection = collection_arary
             param.mode = mode
 
-            console.log(req.query.nickname + "님이 조회하셨습니다.")
+            logger.info('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.query.nickname + '] 조회 / 성공')
         } else {
             param.mode = mode
             param.search = false
             param.content = "닉네임이 존재하지 않거나 잘못됬을 경우 닉네임까지 치고 스페이스바 한번 눌러서 날려보세요."
+
+            logger.error('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.query.nickname + '] 조회 / 닉네임 불일치')
         }
     } else {
         param.mode = mode
         param.title = "서버 점검 중입니다."
+
+        logger.error('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.query.nickname + '] 조회 / 서버 점검')
     }
-    console.log(param)
 
     res.send(param)
 });
@@ -116,7 +123,7 @@ app.get('/api/inven/timer', async (req, res) => {
         lostarkTimer_list.push(param)
     })
 
-    console.log(lostarkTimer_list)
+    logger.info('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 성공')
 
     res.send(lostarkTimer_list)
 });
@@ -150,6 +157,8 @@ app.get('/api/inven/challenge', async (req, res) => {
     Challenge.raid = Challenge_raid_list
     Challenge.abyss = Challenge_raid_abyss
 
+    logger.info('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 성공')
+
     res.send(Challenge)
 });
 
@@ -173,7 +182,7 @@ app.get('/api/shop/search', async (req, res) => {
         result.mode = param.Result
     }
 
-    console.log(result)
+    logger.info('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 아이템 : ['+ req.query.items +'] 검색 / 성공')
 
     res.send(result)
 });
@@ -183,7 +192,7 @@ app.get('/api/shop/mari', async (req, res) => {
     const $ = cheerio.load(html.data)
     const result = await parsing.shop_mari($)
 
-    console.log(result)
+    logger.info('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 성공')
 
     res.send(result)
 });
