@@ -204,10 +204,78 @@ const parsing = {
         for(let a of li) {
             result.push({island: $(a).find('h4.island-name > span.lang-main')})
         }
-
-
         return result
-    }
+    },
+    dictionary: async(items) => {
+        const browser = await puppeteer.launch({
+            // headless: false 브라우저 띄움
+            // headless: true 브라우저 띄우지 않음
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+
+        const page = await browser.newPage()
+        await page.goto('https://lostark.game.onstove.com/ItemDictionary')
+        // const item_type = ["일반", "고급", "희귀", "영웅", "전설", "유물", "고대", "에스더"]
+
+        await page.waitForSelector('input[name=itemdic-name]');
+        await page.evaluate((item) => {
+            document.querySelector('input[name=itemdic-name]').value = item;
+        }, items);
+
+        await page.click('.button--itemdic-submit'); // 아이템 명을 입력하고 [검색] 버튼을 클릭한다.
+        await page.waitForTimeout(200) // 0.5초동안 기다린다.
+
+        await page.click('div.grade > div.lui-select') // 등급 선택
+        await page.waitForTimeout(200) // 0.5초동안 기다린다.
+        await page.click('div.grade > div.lui-select > div.lui-select__option > label[role=option]:nth-child(6)') // 전설 선택
+        await page.waitForTimeout(200) // 0.5초동안 기다린다.
+
+        await page.click('div.main-category > label:nth-child(7)') // 메인 카테고리에 [각인서] 버튼을 클릭한다.
+        await page.waitForSelector('div.itemdic-contents'); // 페이지 로딩이 될 때까지 기다린다.
+        await page.waitForTimeout(200) // 0.5초동안 기다린다.
+
+        await page.click('div.list-box > ul > li:nth-child(1)') // 왼쪽 리스트에서 첫번 째 행을 클릭한다.
+        await page.waitForSelector('div.itemdic-iteminfo > div.itemdic-iteminfo-wrapper'); // 오른쪽 메뉴 로딩될 때까지 기다린다.
+        await page.waitForTimeout(500) // 0.5초 동안 기다린다.
+
+        const content = await page.content()
+        const $ = cheerio.load(content)
+
+        const dictionary1 = $("div.list-box > ul > li");
+        const dictionary2 = $("div.list-box > ul > li:nth-child(1)");
+
+        const dictionary_list = [];
+        let count = 0;
+        let param = {};
+
+        if(dictionary1.length > 1) {
+            for(let a of dictionary1) {
+                dictionary_list[count] = $(a).find('a > span.name').text()
+                count++
+            }
+
+            param = {
+                name: dictionary_list.join(", "),
+                content: []
+            }
+        }
+        if (dictionary1.length == 1) {
+            const name = $(dictionary2).find('a > span.name').text()
+            const data = $('div.itemdic-iteminfo-wrapper > div.itemdic-items > div.itemdic-item > div:nth-child(8) > span:nth-child(2) > font')
+            for (let a of data) {
+                dictionary_list[count] = $(a).text()
+                count++
+            }
+
+            param = {
+                name: name,
+                content: [...new Set(dictionary_list)]
+            }
+        }
+
+        return param
+    },
 }
 
 function  arrOrder(key) {

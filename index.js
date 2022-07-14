@@ -197,6 +197,32 @@ app.get('/api/shop/mari', async (req, res) => {
     res.send(result)
 });
 
+app.get('/api/loa/dictionary', async (req, res) => {
+    // 서버 점검 알림
+    const loa = await parsing.getHtml("https://m-lostark.game.onstove.com")
+    const $1 = cheerio.load(loa.data)
+
+    let param = {}
+
+    const mode = $1( "head > title").text() != "로스트아크 - 서비스 점검" ? true : false
+    if(mode) {
+        let dictionary = await parsing.dictionary(req.query.items)
+
+        param.search = true
+        param.result = dictionary
+        param.mode = mode
+
+        logger.info('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 사전 검색 : [' + req.query.items + '] 조회 / 성공')
+    } else {
+        param.mode = mode
+        param.title = "서버 점검 중입니다."
+
+        logger.error('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 사전 아이템 : [' + req.query.items + '] 조회 / 서버 점검')
+    }
+
+    res.send(param)
+})
+
 app.get('/api/adventureisland', async (req, res) => {
     const html = await parsing.getHtml("https://loawa.com/")
     const $ = cheerio.load(html.data)
