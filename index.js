@@ -220,6 +220,8 @@ app.get('/api/loa/dictionary', async (req, res) => {
         logger.error('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 사전 아이템 : [' + req.query.items + '] 조회 / 서버 점검')
     }
 
+    console.log(param)
+
     res.send(param)
 })
 
