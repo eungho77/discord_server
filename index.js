@@ -8,9 +8,9 @@ const { logger } = require('./logger/logger')
 const app = express();
 
 /* GET home page. */
-app.get('/api/info', async (req, res) => {
+app.get('/api/info/:username/:nickname', async (req, res) => {
     let param = {}
-    const html = await parsing.getHtml("https://m-lostark.game.onstove.com/Profile/Character/" + req.query.nickname)
+    const html = await parsing.getHtml("https://m-lostark.game.onstove.com/Profile/Character/" + req.params.nickname)
     const $ = cheerio.load(html.data)
 
     // 서버 점검 알림
@@ -50,27 +50,27 @@ app.get('/api/info', async (req, res) => {
             param.expand = expand_array // 보유 캐릭터
             param.jewel = jewel_array // 보석
 
-            logger.info('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.query.nickname + '] 조회 / 성공')
+            logger.info('Discord 닉네임 : ' + req.params.username + '님이 [검색] "명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname.trim() + '] 조회 / 성공')
         } else {
             param.mode = mode;
             param.search = false
             param.content = "닉네임이 존재하지 않거나 잘못됬을 경우 닉네임까지 치고 스페이스바 한번 눌러서 날려보세요."
 
-            logger.error('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.query.nickname + '] 조회 / 닉네임 불일치')
+            logger.error('Discord 닉네임 : ' + req.params.username + '님이 [검색] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname.trim() + '] 조회 / 닉네임 불일치')
         }
     } else {
         param.mode = mode
         param.title = "서버 점검 중입니다."
 
-        logger.error('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.query.nickname + '] 조회 / 서버 점검')
+        logger.error('Discord 닉네임 : ' + req.params.username + '님이 [검색] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname.trim() + '] 조회 / 서버 점검')
     }
 
     res.send(param)
 });
 
-app.get('/api/internal_stability', async (req, res) => {
+app.get('/api/internal_stability/:username/:nickname', async (req, res) => {
     const param = {};
-    const html = await parsing.getHtml("https://m-lostark.game.onstove.com/Profile/Character/" + req.query.nickname);
+    const html = await parsing.getHtml("https://m-lostark.game.onstove.com/Profile/Character/" + req.params.nickname);
     const $ = cheerio.load(html.data);
 
     // 서버 점검 알림
@@ -82,32 +82,32 @@ app.get('/api/internal_stability', async (req, res) => {
         const nickname = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[1]
         if(nickname) {
             let life_arryy = parsing.profile_skill_life($) // 생활스킬
-            let collection_arary = await parsing.profile_collection(req.query.nickname)
+            let collection_arary = await parsing.profile_collection(req.params.nickname)
 
             param.search = true
             param.life = life_arryy // 생활스킬
             param.collection = collection_arary
             param.mode = mode
 
-            logger.info('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.query.nickname + '] 조회 / 성공')
+            logger.info('Discord 닉네임 : ' + req.params.username + '님이 [내실] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname + '] 조회 / 성공')
         } else {
             param.mode = mode
             param.search = false
             param.content = "닉네임이 존재하지 않거나 잘못됬을 경우 닉네임까지 치고 스페이스바 한번 눌러서 날려보세요."
 
-            logger.error('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.query.nickname + '] 조회 / 닉네임 불일치')
+            logger.error('Discord 닉네임 : ' + req.params.username + '님이 [내실] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname + '] 조회 / 닉네임 불일치')
         }
     } else {
         param.mode = mode
         param.title = "서버 점검 중입니다."
 
-        logger.error('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.query.nickname + '] 조회 / 서버 점검')
+        logger.error('Discord 닉네임 : ' + req.params.username + '님이 [내실] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname + '] 조회 / 서버 점검')
     }
 
     res.send(param)
 });
 
-app.get('/api/inven/timer', async (req, res) => {
+app.get('/api/inven/timer/:username', async (req, res) => {
     let html = await parsing.getHtml("https://m.inven.co.kr/lostark/timer/");
     const $ = cheerio.load(html.data)
     let lostarkTimer_list = [];
@@ -123,12 +123,12 @@ app.get('/api/inven/timer', async (req, res) => {
         lostarkTimer_list.push(param)
     })
 
-    logger.info('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 성공')
+    logger.info('Discord 닉네임 : ' + req.params.username + '님이 [스케줄] 명령어를 썼습니다. / 성공')
 
     res.send(lostarkTimer_list)
 });
 
-app.get('/api/inven/challenge', async (req, res) => {
+app.get('/api/inven/challenge/:username', async (req, res) => {
     let html = await parsing.getHtml("https://lostark.inven.co.kr/")
     const $ = cheerio.load(html.data)
     let Challenge_raid_list = []
@@ -157,47 +157,55 @@ app.get('/api/inven/challenge', async (req, res) => {
     Challenge.raid = Challenge_raid_list
     Challenge.abyss = Challenge_raid_abyss
 
-    logger.info('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 성공')
+    logger.info('Discord 닉네임 : ' + req.params.username + '님이 [도전] 명령어를 썼습니다. / 성공')
 
     res.send(Challenge)
 });
 
-app.get('/api/shop/search', async (req, res) => {
-    let itmes = await parsing.getData("http://152.70.248.4:5000/tradeplus/" + req.query.items)
+app.get('/api/shop/search/:username/:items', async (req, res) => {
+    let param = await parsing.getData("http://152.70.248.4:5000/tradeplus/" + req.params.items)
 
-    const param = itmes.data
+    const data = param.data
+    console.log(data)
     let result = {}
 
-    if (param.Result === "Success"){
-        if (param.Data.length > 1) {
-            result.items = param.Data
-            result.mode = param.Result
-        } else {
-            result.items = param.FirstItem[0]
-
-            result.mode = param.Result
+    if(data.Result == 'Success') {
+        if (data.Data.length > 1) {
+            result.mode = true
+            result.total = data.Data.length
+            result.items = data.Data
         }
-    } else {
-        result.items = param.Reason
-        result.mode = param.Result
+        if (data.Data.length == 1) {
+            result.mode = true
+            result.items = data.FirstItem
+            result.total = data.Data.length
+        }
+
+        logger.info('Discord 닉네임 : ' + req.params.username + '님이 [상점] 명령어를 썼습니다. / 사전 검색 : [' + req.params.items + '] 조회 / 성공')
     }
 
-    logger.info('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 아이템 : ['+ req.query.items +'] 검색 / 성공')
+    if(data.Result == 'Failed') {
+        result.mode = false
+        result.items = '아이템이 없거나 아바타명일경우 검색 불가능합니다.'
+        result.total = 0
+
+        logger.error('Discord 닉네임 : ' + req.params.username + '님이 [상점] 명령어를 썼습니다. / 사전 검색 : [' + req.params.items + '] 조회 / 실패')
+    }
 
     res.send(result)
 });
 
-app.get('/api/shop/mari', async (req, res) => {
+app.get('/api/shop/mari/:username', async (req, res) => {
     const html = await parsing.getHtml("https://lostark.game.onstove.com/Shop#mari")
     const $ = cheerio.load(html.data)
     const result = await parsing.shop_mari($)
 
-    logger.info('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 성공')
+    logger.info('Discord 닉네임 : ' + req.param.username + '님이 [마리샵] 명령어를 썼습니다. / 성공')
 
     res.send(result)
 });
 
-app.get('/api/loa/dictionary', async (req, res) => {
+app.get('/api/loa/dictionary/:username/:items', async (req, res) => {
     // 서버 점검 알림
     const loa = await parsing.getHtml("https://m-lostark.game.onstove.com")
     const $1 = cheerio.load(loa.data)
@@ -206,21 +214,19 @@ app.get('/api/loa/dictionary', async (req, res) => {
 
     const mode = $1( "head > title").text() != "로스트아크 - 서비스 점검" ? true : false
     if(mode) {
-        let dictionary = await parsing.dictionary(req.query.items)
+        let dictionary = await parsing.dictionary(req.params.items)
 
         param.search = true
         param.result = dictionary
         param.mode = mode
 
-        logger.info('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 사전 검색 : [' + req.query.items + '] 조회 / 성공')
+        logger.info('Discord 닉네임 : ' + req.params.username + '님이 [사전] 명령어를 썼습니다. / 사전 검색 : [' + req.params.items + '] 조회 / 성공')
     } else {
         param.mode = mode
         param.title = "서버 점검 중입니다."
 
-        logger.error('Discord 닉네임 : ' + req.query.username + '님이 "/'+ req.query.command +'"명령어를 썼습니다. / 사전 아이템 : [' + req.query.items + '] 조회 / 서버 점검')
+        logger.error('Discord 닉네임 : ' + req.params.username + '님이 [사전] 명령어를 썼습니다. / 사전 아이템 : [' + req.params.items + '] 조회 / 서버 점검')
     }
-
-    console.log(param)
 
     res.send(param)
 })
