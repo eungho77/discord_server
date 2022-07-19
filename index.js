@@ -181,7 +181,7 @@ app.get('/api/shop/search/:username/:items', async (req, res) => {
             result.total = data.Data.length
         }
 
-        logger.info('Discord 닉네임 : ' + req.params.username + '님이 [상점] 명령어를 썼습니다. / 사전 검색 : [' + req.params.items + '] 조회 / 성공')
+        logger.info('Discord 닉네임 : ' + req.params.username + '님이 [상점] 명령어를 썼습니다. / 검색 : [' + req.params.items + '] 조회 / 성공')
     }
 
     if(data.Result == 'Failed') {
@@ -189,7 +189,7 @@ app.get('/api/shop/search/:username/:items', async (req, res) => {
         result.items = '아이템이 없거나 아바타명일경우 검색 불가능합니다.'
         result.total = 0
 
-        logger.error('Discord 닉네임 : ' + req.params.username + '님이 [상점] 명령어를 썼습니다. / 사전 검색 : [' + req.params.items + '] 조회 / 실패')
+        logger.error('Discord 닉네임 : ' + req.params.username + '님이 [상점] 명령어를 썼습니다. / 검색 : [' + req.params.items + '] 조회 / 실패')
     }
 
     res.send(result)
