@@ -128,6 +128,27 @@ app.get('/api/inven/timer/:username', async (req, res) => {
     res.send(lostarkTimer_list)
 });
 
+app.get('/api/inven/timer1/', async (req, res) => {
+    let html = await parsing.getHtml("https://m.inven.co.kr/lostark/timer/");
+    const $ = cheerio.load(html.data)
+    let lostarkTimer_list = [];
+
+    const lostarkTimer = $('#lostarkTimer > div > div.bosslist > div > ul > li');
+    let param = {};
+
+    lostarkTimer.each(function(i, v) {
+        param = {
+            name: $(v).find("a.info > span.npcname").text().replace(/\s$/gi, ""),
+            time: $(v).find("a.info > span.gentime").text().replace(/\s$/gi, "")
+        }
+        lostarkTimer_list.push(param)
+    })
+
+    logger.info('Discord 닉네임 : ' + req.params.username + '님이 [스케줄] 명령어를 썼습니다. / 성공')
+
+    res.send(lostarkTimer_list)
+});
+
 app.get('/api/inven/challenge/:username', async (req, res) => {
     let html = await parsing.getHtml("https://lostark.inven.co.kr/")
     const $ = cheerio.load(html.data)
@@ -163,7 +184,7 @@ app.get('/api/inven/challenge/:username', async (req, res) => {
 });
 
 app.get('/api/shop/search/:username/:items', async (req, res) => {
-    let param = await parsing.getData("http://152.70.248.4:5000/tradeplus/" + req.params.items)
+    let param = await parsing.getData("https://lostarkapi.ga/tradeplus/" + req.params.items)
 
     const data = param.data
     console.log(data)
