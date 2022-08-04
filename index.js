@@ -13,11 +13,14 @@ app.get('/api/info/:username/:nickname', async (req, res) => {
     const html = await parsing.getHtml("https://m-lostark.game.onstove.com/Profile/Character/" + req.params.nickname)
     const $ = cheerio.load(html.data)
 
+    const image = await parsing.getHtml("https://lostark.game.onstove.com/Profile/Character/" + req.params.nickname)
+    const $1 = cheerio.load(image.data)
+
     // 서버 점검 알림
     const loa = await parsing.getHtml("https://m-lostark.game.onstove.com")
-    const $1 = cheerio.load(loa.data)
+    const $2 = cheerio.load(loa.data)
 
-    const mode = $1( "head > title").text() != "로스트아크 - 서비스 점검" ? true : false
+    const mode = $2( "head > title").text() != "로스트아크 - 서비스 점검" ? true : false
 
     if(mode) {
         param.nickname = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[1];
@@ -28,7 +31,8 @@ app.get('/api/info/:username/:nickname', async (req, res) => {
             param.expedition = $("div.myinfo__contents-level > div.wrapper-define:nth-child(1) > dl.define > dd.level").text() // 원정대
             param.level = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[0] // 로스트아크 레벨
             param.itemLevel = $("div.myinfo__contents-level > div.wrapper-define:nth-child(2) > dl.item > dd.level").text() // 장착 아이템
-            param.mode = mode;
+            param.image = $1("#profile-equipment > div.profile-equipment__character > img").attr('src') // 장착 아이템
+            param.mode = mode
 
             let basic_array = parsing.profile_ability_basic($) // 최대 생명력, 전투 공격력
             let battle_array = parsing.profile_ability_battle($) // 치명, 특화, 제압, 신속, 인내, 숙련
@@ -218,10 +222,28 @@ app.get('/api/shop/search/:username/:items', async (req, res) => {
 
 app.get('/api/shop/mari/:username', async (req, res) => {
     const html = await parsing.getHtml("https://lostark.game.onstove.com/Shop#mari")
-    const $ = cheerio.load(html.data)
-    const result = await parsing.shop_mari($)
+    let result
 
-    logger.info('Discord 닉네임 : ' + req.param.username + '님이 [마리샵] 명령어를 썼습니다. / 성공')
+    // 서버 점검 알림
+    const loa = await parsing.getHtml("https://m-lostark.game.onstove.com")
+    const $1 = cheerio.load(loa.data)
+
+    const mode = $1( "head > title").text() != "로스트아크 - 서비스 점검" ? true : false
+
+    if(mode) {
+        const $ = cheerio.load(html.data)
+        result = {
+            mode: mode,
+            result: await parsing.shop_mari($)
+        }
+        logger.info('Discord 닉네임 : ' + req.param.username + '님이 [마리샵] 명령어를 썼습니다. / 성공')
+    } else {
+        result = {
+            mode: mode,
+            title : "서버 점검 중입니다."
+        }
+        logger.error('Discord 닉네임 : ' + req.params.username + '님이 [마리샵] 명령어를 썼습니다. / 서버 점검')
+    }
 
     res.send(result)
 });

@@ -226,16 +226,16 @@ const parsing = {
         }, items)
 
         await page.click('.button--itemdic-submit') // 아이템 명을 입력하고 [검색] 버튼을 클릭한다.
-        await page.waitForTimeout(200) // 0.5초동안 기다린다.
+        await page.waitForTimeout(500) // 0.5초동안 기다린다.
 
         await page.click('div.grade > div.lui-select') // 등급 선택
-        await page.waitForTimeout(200) // 0.5초동안 기다린다.
+        await page.waitForTimeout(500) // 0.5초동안 기다린다.
         await page.click('div.grade > div.lui-select > div.lui-select__option > label[role=option]:nth-child(6)') // 전설 선택
-        await page.waitForTimeout(200) // 0.5초동안 기다린다.
+        await page.waitForTimeout(500) // 0.5초동안 기다린다.
 
         await page.click('div.main-category > label:nth-child(7)') // 메인 카테고리에 [각인서] 버튼을 클릭한다.
         await page.waitForSelector('div.itemdic-contents') // 페이지 로딩이 될 때까지 기다린다.
-        await page.waitForTimeout(200) // 0.5초동안 기다린다.
+        await page.waitForTimeout(500) // 0.5초동안 기다린다.
 
         const list_total = await page.$eval('#lostark-wrapper > div > main > div > div > div > div.itemdic-contents > div.list > h3 > em', count => {
             return count.textContent
