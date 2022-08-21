@@ -274,12 +274,11 @@ app.get('/api/loa/dictionary/:username/:items', async (req, res) => {
     res.send(param)
 })
 
-app.get('/api/adventureisland', async (req, res) => {
-    const html = await parsing.getHtml("https://loawa.com/")
-    const $ = cheerio.load(html.data)
-    const result = await parsing.adventureisland($)
+app.get('/api/adventureisland/:username', async (req, res) => {
+    const content = await parsing.adventureisland("https://ark.bynn.kr/calendar/summary")
+    logger.info('Discord 닉네임 : ' + req.params.username + '님이 [모험섬] 명령어를 썼습니다. / 성공')
 
-    res.send(result)
+    res.send(content)
 });
 
 var server = app.listen(server_port, function()  {

@@ -29,3 +29,7 @@
 ````
 /api/loa/dictionary/:username/:items
 ````
+## Lostark adventureisland
+````
+/api/adventureisland/:username
+````

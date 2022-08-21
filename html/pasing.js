@@ -198,14 +198,46 @@ const parsing = {
         }
         return result
     },
-    adventureisland: async ($) => {
-        let result = [];
+    adventureisland: async (link) => {
+        let result = []
+        let adventureisland_list = [];
 
-        const li = $('ul.today-quest-list > li')
-        for(let a of li) {
-            result.push({island: $(a).find('h4.island-name > span.lang-main')})
+        const browser = await puppeteer.launch({
+            // headless: false 브라우저 띄움
+            // headless: true 브라우저 띄우지 않음
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        })
+
+        const page = await browser.newPage()
+        await page.goto(link)
+
+        await page.waitForSelector('body > bynn-root > mat-sidenav-container > mat-sidenav-content > div > main > bynn-calendar-container > div > bynn-calendar-summary-view > bynn-calendar-compass > div:nth-child(2)')
+        await page.waitForTimeout(200) // 0.2초동안 기다린다.
+
+        const content = await page.content();
+        const $ = cheerio.load(content)
+
+        const inserted = $('body > bynn-root > mat-sidenav-container > mat-sidenav-content > div > main > bynn-calendar-container > div > bynn-calendar-summary-view > bynn-calendar-compass > div:nth-child(2) > div.ng-star-inserted')
+        for(let data of inserted){
+            for(let card of $(data).find("bynn-schedule-entry-card.ng-star-inserted")){
+                let time_list = []
+                for(let time of $(card).find("mat-card > div > div")){
+                    if($(time).attr("fxlayout") == "column"){
+                        time_list.push($(time).text().trim().split(" ")[0] + " " + $(time).text().trim().split(" ")[1])
+                    }
+
+                }
+                result = {
+                    name : $(card).find("mat-card > div > div:nth-child(1) > div").text().trim(),
+                    time : time_list.join(",").trim(),
+                    type : $(card).find("mat-card > div > div:nth-child(5) > img").attr("src").split("/").reverse()[0].split(".")[0]
+                }
+
+                adventureisland_list.push(result)
+            }
         }
-        return result
+        return adventureisland_list
     },
     dictionary: async(items) => {
         let param = {}
