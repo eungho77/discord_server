@@ -1,13 +1,28 @@
-const winston = require('winston');
-const winstonDaily = require('winston-daily-rotate-file');
+const winston = require('winston')
+const util = require('util')
+const winstonDaily = require('winston-daily-rotate-file')
 
-const logDir = __dirname+'/logs';  // logs 디렉토리 하위에 로그 파일 저장
-const { combine, timestamp, printf } = winston.format;
+const logDir = __dirname+'/logs'  // logs 디렉토리 하위에 로그 파일 저장
+const { combine, timestamp, printf } = winston.format
 
 // Define log format
 const logFormat = printf(info => {
-    return `${info.timestamp} ${info.level}: ${info.message}`;
+    return `${info.timestamp} ${info.level}: ${util.format('%o', info.message)}`
 });
+
+const COMMON_OPT = {
+    handleExceptions: true,
+    json: false,
+    format: combine(
+        timestamp(),
+        printf(({ level, message, timestamp }) => {
+            level = level.toUpperCase()
+            return util.format('%o', message).trim().split('\n').map((line) => {
+                return `${timestamp} [${level}]: ${line}`
+            }).join('\n')
+        })
+    )
+}
 
 /*
  * Log Level
@@ -39,6 +54,15 @@ const logger = winston.createLogger({
             maxFiles: 30,
             zippedArchive: true,
         }),
+        new winstonDaily({
+            ...COMMON_OPT,
+            level: 'debug',
+            datePattern: 'YYYY-MM-DD',
+            dirname: logDir + '/debug',  // error.log 파일은 /logs/error 하위에 저장
+            filename: `%DATE%.debug.log`,
+            maxFiles: 30,
+            zippedArchive: true,
+        })
     ],
 });
 

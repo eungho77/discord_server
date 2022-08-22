@@ -41,32 +41,40 @@ app.get('/api/info/:username/:nickname', async (req, res) => {
             let card_array = parsing.card_tab($) // 카드
             let expand_array = await parsing.expand_character_list($) // 보유 캐릭터
 
+            try {
+                // 기본 특성
+                param.basic = {
+                    attack: basic_array[0], // 전투 공격력
+                    hp: basic_array[1] // 최대 생명력
+                };
 
-            // 기본 특성
-            param.basic = {
-                attack: basic_array[0], // 전투 공격력
-                hp: basic_array[1] // 최대 생명력
-            };
+                param.battle = battle_array
+                param.engrave = engrave_array // 각인 효과
+                param.card = card_array // 카드
+                param.expand = expand_array // 보유 캐릭터
+                param.jewel = jewel_array // 보석
 
-            param.battle = battle_array
-            param.engrave = engrave_array // 각인 효과
-            param.card = card_array // 카드
-            param.expand = expand_array // 보유 캐릭터
-            param.jewel = jewel_array // 보석
+                logger.info('Discord 닉네임 : ' + req.params.username + '님이 [검색] "명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname.trim() + '] 조회 / 성공')
+                logger.debug(param)
+            } catch (e) {
+                logger.debug(e)
+            }
 
-            logger.info('Discord 닉네임 : ' + req.params.username + '님이 [검색] "명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname.trim() + '] 조회 / 성공')
+
         } else {
             param.mode = mode;
             param.search = false
             param.content = "닉네임이 존재하지 않거나 잘못됬을 경우 닉네임까지 치고 스페이스바 한번 눌러서 날려보세요."
 
             logger.error('Discord 닉네임 : ' + req.params.username + '님이 [검색] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname.trim() + '] 조회 / 닉네임 불일치')
+            logger.debug(param)
         }
     } else {
         param.mode = mode
         param.title = "서버 점검 중입니다."
 
         logger.error('Discord 닉네임 : ' + req.params.username + '님이 [검색] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname.trim() + '] 조회 / 서버 점검')
+        logger.debug(param)
     }
 
     res.send(param)
@@ -88,24 +96,32 @@ app.get('/api/internal_stability/:username/:nickname', async (req, res) => {
             let life_arryy = parsing.profile_skill_life($) // 생활스킬
             let collection_arary = await parsing.profile_collection(req.params.nickname)
 
-            param.search = true
-            param.life = life_arryy // 생활스킬
-            param.collection = collection_arary
-            param.mode = mode
+            try {
+                param.search = true
+                param.life = life_arryy // 생활스킬
+                param.collection = collection_arary
+                param.mode = mode
 
-            logger.info('Discord 닉네임 : ' + req.params.username + '님이 [내실] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname + '] 조회 / 성공')
+                logger.info('Discord 닉네임 : ' + req.params.username + '님이 [내실] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname + '] 조회 / 성공')
+                logger.debug(collection_arary)
+            } catch (e) {
+                logger.debug(e)
+            }
         } else {
             param.mode = mode
             param.search = false
             param.content = "닉네임이 존재하지 않거나 잘못됬을 경우 닉네임까지 치고 스페이스바 한번 눌러서 날려보세요."
 
             logger.error('Discord 닉네임 : ' + req.params.username + '님이 [내실] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname + '] 조회 / 닉네임 불일치')
+            logger.debug(param)
+
         }
     } else {
         param.mode = mode
         param.title = "서버 점검 중입니다."
 
         logger.error('Discord 닉네임 : ' + req.params.username + '님이 [내실] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname + '] 조회 / 서버 점검')
+        logger.debug(param)
     }
 
     res.send(param)
@@ -127,7 +143,12 @@ app.get('/api/inven/timer/:username', async (req, res) => {
         lostarkTimer_list.push(param)
     })
 
-    logger.info('Discord 닉네임 : ' + req.params.username + '님이 [스케줄] 명령어를 썼습니다. / 성공')
+    try {
+        logger.info('Discord 닉네임 : ' + req.params.username + '님이 [스케줄] 명령어를 썼습니다. / 성공')
+        logger.debug(lostarkTimer_list)
+    } catch (e) {
+        logger.debug(e)
+    }
 
     res.send(lostarkTimer_list)
 });
@@ -148,7 +169,12 @@ app.get('/api/inven/timer1/', async (req, res) => {
         lostarkTimer_list.push(param)
     })
 
-    logger.info('Discord 닉네임 : ' + req.params.username + '님이 [스케줄] 명령어를 썼습니다. / 성공')
+    try {
+        logger.info('[스케줄] 명령어를 썼습니다. / 성공')
+        logger.debug(lostarkTimer_list)
+    } catch (e) {
+        logger.debug(e)
+    }
 
     res.send(lostarkTimer_list)
 });
@@ -178,11 +204,16 @@ app.get('/api/inven/challenge/:username', async (req, res) => {
         Challenge_raid_abyss.push(param)
     })
 
-    Challenge.date = Challenge_date
-    Challenge.raid = Challenge_raid_list
-    Challenge.abyss = Challenge_raid_abyss
+    try {
+        Challenge.date = Challenge_date
+        Challenge.raid = Challenge_raid_list
+        Challenge.abyss = Challenge_raid_abyss
 
-    logger.info('Discord 닉네임 : ' + req.params.username + '님이 [도전] 명령어를 썼습니다. / 성공')
+        logger.info('Discord 닉네임 : ' + req.params.username + '님이 [도전] 명령어를 썼습니다. / 성공')
+        logger.debug(Challenge)
+    } catch (e) {
+        logger.debug(e)
+    }
 
     res.send(Challenge)
 });
@@ -191,22 +222,25 @@ app.get('/api/shop/search/:username/:items', async (req, res) => {
     let param = await parsing.getData("https://lostarkapi.ga/tradeplus/" + req.params.items)
 
     const data = param.data
-    console.log(data)
     let result = {}
 
-    if(data.Result == 'Success') {
-        if (data.Data.length > 1) {
-            result.mode = true
-            result.total = data.Data.length
-            result.items = data.Data
+    try{
+        if(data.Result == 'Success') {
+            if (data.Data.length > 1) {
+                result.mode = true
+                result.total = data.Data.length
+                result.items = data.Data
+            }
+            if (data.Data.length == 1) {
+                result.mode = true
+                result.items = data.FirstItem
+                result.total = data.Data.length
+            }
+            logger.info('Discord 닉네임 : ' + req.params.username + '님이 [상점] 명령어를 썼습니다. / 검색 : [' + req.params.items + '] 조회 / 성공')
+            logger.debug(data)
         }
-        if (data.Data.length == 1) {
-            result.mode = true
-            result.items = data.FirstItem
-            result.total = data.Data.length
-        }
-
-        logger.info('Discord 닉네임 : ' + req.params.username + '님이 [상점] 명령어를 썼습니다. / 검색 : [' + req.params.items + '] 조회 / 성공')
+    } catch (e) {
+        logger.debug(e)
     }
 
     if(data.Result == 'Failed') {
@@ -232,11 +266,18 @@ app.get('/api/shop/mari/:username', async (req, res) => {
 
     if(mode) {
         const $ = cheerio.load(html.data)
-        result = {
-            mode: mode,
-            result: await parsing.shop_mari($)
+        const data = await parsing.shop_mari($)
+        try {
+            result = {
+                mode: mode,
+                result: data
+            }
+            logger.info('Discord 닉네임 : ' + req.param.username + '님이 [마리샵] 명령어를 썼습니다. / 성공')
+            logger.debug(data)
+        } catch (e) {
+            logger.debug(e)
         }
-        logger.info('Discord 닉네임 : ' + req.param.username + '님이 [마리샵] 명령어를 썼습니다. / 성공')
+
     } else {
         result = {
             mode: mode,
@@ -258,12 +299,16 @@ app.get('/api/loa/dictionary/:username/:items', async (req, res) => {
     const mode = $1( "head > title").text() != "로스트아크 - 서비스 점검" ? true : false
     if(mode) {
         let dictionary = await parsing.dictionary(req.params.items)
+        try {
+            param.search = true
+            param.result = dictionary
+            param.mode = mode
 
-        param.search = true
-        param.result = dictionary
-        param.mode = mode
-
-        logger.info('Discord 닉네임 : ' + req.params.username + '님이 [사전] 명령어를 썼습니다. / 사전 검색 : [' + req.params.items + '] 조회 / 성공')
+            logger.info('Discord 닉네임 : ' + req.params.username + '님이 [사전] 명령어를 썼습니다. / 사전 검색 : [' + req.params.items + '] 조회 / 성공')
+            logger.debug(dictionary)
+        } catch (e) {
+            logger.debug(e)
+        }
     } else {
         param.mode = mode
         param.title = "서버 점검 중입니다."
@@ -276,9 +321,14 @@ app.get('/api/loa/dictionary/:username/:items', async (req, res) => {
 
 app.get('/api/adventureisland/:username', async (req, res) => {
     const content = await parsing.adventureisland("https://ark.bynn.kr/calendar/summary")
-    logger.info('Discord 닉네임 : ' + req.params.username + '님이 [모험섬] 명령어를 썼습니다. / 성공')
+    try{
+        logger.info('Discord 닉네임 : ' + req.params.username + '님이 [모험섬] 명령어를 썼습니다. / 성공')
+        logger.debug(content)
 
-    res.send(content)
+        res.send(content)
+    } catch (e) {
+        logger.debug(e)
+    }
 });
 
 var server = app.listen(server_port, function()  {
