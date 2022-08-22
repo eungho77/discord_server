@@ -226,12 +226,11 @@ const parsing = {
                     if($(time).attr("fxlayout") == "column"){
                         time_list.push($(time).text().trim().split(" ")[0] + " " + $(time).text().trim().split(" ")[1])
                     }
-
                 }
                 result = {
                     name : $(card).find("mat-card > div > div:nth-child(1) > div").text().trim(),
                     time : time_list.join(",").trim(),
-                    type : $(card).find("mat-card > div > div:nth-child(5) > img").attr("src").split("/").reverse()[0].split(".")[0]
+                    type : $(card).find("mat-card > div > div.ng-star-inserted > img").attr("src").split("/").reverse()[0].split(".")[0]
                 }
 
                 adventureisland_list.push(result)
