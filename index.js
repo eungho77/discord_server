@@ -61,11 +61,11 @@ app.get('/api/info/:username/:nickname', async (req, res) => {
                     param.collectibles = parsing.profile_collection(loa_collectibles.data) // 보유 캐릭터
                     param.jewel = parsing.profile_jewel(loa_gems.data) // 보석
 
-                    // logger.info('Discord 닉네임 : ' + req.params.username + '님이 [검색] "명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname.trim() + '] 조회 / 성공')
-                    // logger.debug(param)
+                    logger.info('Discord 닉네임 : ' + req.params.username + '님이 [검색] "명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname.trim() + '] 조회 / 성공')
+                    logger.debug(param)
                 } catch (e) {
                     console.log(e)
-                    // logger.debug(e)
+                    logger.debug(e)
                 }
             } else {
                 param.mode = mode;
