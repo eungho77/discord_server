@@ -1,100 +1,165 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
 const puppeteer = require("puppeteer");
-const {Interaction} = require("discord.js");
+// const {Interaction} = require("discord.js");
+const { jmt_key } = require('../config.json')
 
 const parsing = {
     getHtml: async (url) => {
         try {
-            return await axios.get(encodeURI(url));
+            return await axios.get(encodeURI(url))
         } catch (e) {
-            console.error(e);
+            console.error(e)
         }
     },
     getData: async (url) => {
         try {
-            return await axios.get(encodeURI(url));
+            return await axios.get(encodeURI(url),
+                {
+                    headers : {
+                        Authorization : jmt_key
+                    }
+                }
+            );
         } catch (e) {
-            console.error(e);
+            console.error(e)
         }
     },
-    profile_ability_basic: function($) {
-        const basic = $("div.profile-ability-basic:nth-child(1) > ul > li");
-        const basic_array = {}; // 기본 특성
-
-        basic.each(function (i, v) {
-            basic_array[i] = $(v).find("span:nth-child(2)").text();
-        })
-
-        return basic_array;
+    postData: async (url) => {
+        try {
+            return await axios.post(encodeURI(url))
+        } catch (e) {
+            console.error(e)
+        }
     },
-    profile_ability_battle: function($) {
-        const battle = $("div.profile-ability-basic:nth-child(2) > ul > li");
-        const battle_list = []; // 기본 특성
+    profile_battle: function(data) {
+        const battle_list = [] // 기본 특성
+        let count = 0
 
-        battle.each(function(i, v){
+        while(true) {
             param = {
-                name: $(v).find("span:nth-child(1)").text(),
-                number: $(v).find("span:nth-child(2)").text()
+                name : data[count].Type,
+                number : data[count].Value
             }
-            battle_list.push(param);
-        })
+            battle_list.push(param)
+            if(count == data.length - 3) {
+                break
+            }
+            count++
+        }
 
         return battle_list;
     },
-    profile_ability_engrave: function($) {
-        // 특정 캐릭터마다 33333일 수도 있고 333321일 수도 있고 3333일 수도 있기 때문에 리스트로 설정
-        const engrave = $("div.profile-ability-engrave > ul > li");
-        const engrave_list = []; // 각인 리스트
+    profile_tendencies: function(data) {
+        const tendencies_list = [] // 기본 특성
+        let count = 0
 
-        engrave.each(function(i, v){
+        for(let tendencies of data) {
             param = {
-                name: $(v).find("span").text().replace(/\s/gi, "").split("Lv.")[0],
-                level: $(v).find("span").text().replace(/\s/gi, "").split("Lv.")[1],
-                text: $(v).find("div.profile-ability-tooltip > p").text()
+                name : tendencies.Type,
+                number : tendencies.Point + "/" + tendencies.MaxPoint
+            }
+            tendencies_list.push(param)
+        }
+
+        return tendencies_list
+    },
+    profile_skills: function(data) {
+        const skills_list = [] // 스킬 설명
+        let skills_detail_list = [] // 상세 스킬
+
+        for(let skill of data) {
+            if(skill.Level >= 5) {
+                for(let skill_detail of skill.Tripods) {
+                    if(skill_detail.IsSelected){
+                        skill_detail = {
+                            slot: skill_detail.Slot,
+                            name: skill_detail.Name,
+                            level: skill_detail.Level
+                        }
+                        skills_detail_list.push(skill_detail)
+                    }
+                }
+                param = {
+                    name: skill.Name,
+                    level: skill.Level,
+                    detail: skills_detail_list
+                }
+                skills_list.push(param)
+                skills_detail_list = []
+            }
+        }
+
+        return skills_list
+    },
+    profile_equipment: function(data) {
+        const equipment_list = []
+
+        for(let equipment of data) {
+            param = {
+                type : equipment.Type,
+                name : "[" + equipment.Grade + "] " + equipment.Name
+            }
+            equipment_list.push(param)
+        }
+
+        return equipment_list
+
+    },
+    profile_avatars: function(data) {
+        const avatars_list = []
+
+        for(let avatars of data) {
+            param = {
+                type : avatars.Type,
+                name : "[" + avatars.Grade + "] " + avatars.Name
+            }
+            avatars_list.push(param)
+        }
+
+        return avatars_list
+
+    },
+    profile_ability_engrave: function(data) {
+        const engrave_list = [] // 각인 리스트
+
+        for(let engrave of data.Effects) {
+            param = {
+                name : engrave.Name.split(" Lv. ")[0],
+                level : engrave.Name.split(" Lv. ")[1]
             }
             engrave_list.push(param)
-        })
+        }
 
-        return engrave_list;
+        return engrave_list
     },
-    expand_character_list: async ($) => {
-        const list_nickname = $("div.myinfo__character--wrapper2 > ul > li");
-        var character_list = [];
+    expand_character_list: function(data) {
+        const character_list = [] // 보유 캐릭터 리스트
 
-        const promises = list_nickname.map(async (i, v) => {
-            const html = await parsing.getHtml("https://m-lostark.game.onstove.com/Profile/Character/"  + $(v).text().split(" ")[1]);
-            const param = parsing.character_list_search(html, $(v).text().split(" ")[1]);
-
+        for(let expand_character of data){
+            param = {
+                nickname : expand_character.CharacterName, // 닉네임
+                server : expand_character.ServerName, // 서버
+                job : expand_character.CharacterClassName, // 직업
+                level : expand_character.CharacterLevel, // 로스트아크 레벨
+                max_item_level : expand_character.ItemMaxLevel, // 로스트아크 최대 레벨
+                avg_item_level : expand_character.ItemAvgLevel // 장착 아이템
+            }
             character_list.push(param)
-        });
-        await Promise.all(promises)
-        character_list.sort(arrOrder("itemLevel"))
+        }
+
         return character_list
     },
-    character_list_search: function(html, nickname) {
-        let param = {};
+    card_tab: function(data) {
+        const card_list = []
 
-        const $1 = cheerio.load(html.data);
-        param.nickname = nickname;
-        param.server = $1("dd.myinfo__character > div.wrapper-define > dl.define:nth-child(1) > dd").text().split("@")[1]; // 서버
-        param.job = $1("dd.myinfo__character > div.wrapper-define > dl.define:nth-child(2) > dd").text() // 직업
-        param.level = $1("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[0]; // 로스트아크 레벨
-        param.itemLevel = $1("div.myinfo__contents-level > div.wrapper-define:nth-child(2) > dl.item > dd.level").text(); // 장착 아이템
-
-        return param;
-    },
-    card_tab: function($) {
-        const card = $("div#card-tab > ul > li");
-        const card_list = [];
-
-        card.each(function (i, v) {
+        for(let card of data.Cards) {
             param = {
-                name: $(v).find("div.card-slot > strong > font").text(),
-                stone_count: $(v).find("div.card-slot").attr("data-awake")
+                name : card.Name,
+                stone_count : card.AwakeCount
             }
-            card_list.push(param);
-        })
+            card_list.push(param)
+        }
 
         return card_list
     },
@@ -113,66 +178,38 @@ const parsing = {
 
         return life_list
     },
-    profile_collection: async(nickname) => {
-        let param = {}
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
-
-        const page = await browser.newPage()
-        await page.setRequestInterception(true)
-        page.on('request', function(req) {
-            switch (req.resourceType()) {
-                case 'stylesheet':
-                case 'font':
-                case 'image':
-                    req.abort()
-                    break;
-                default:
-                    req.continue()
-                    break;
-            }
-        });
-
-        await page.goto('https://lostark.game.onstove.com/Profile/Character/'+ nickname);
-
-        const content = await page.content();
-        const $ = cheerio.load(content)
-
-        const collection = $("#tab1 > div.lui-tab__menu > a");
+    profile_collection: function (data) {
         const collection_list = [];
 
-        collection.each(function(a,b){
+        for(let collection of data){
             param = {
-                name: $(b).text().replace(/[0-9]/g, "").replace(/\s$/gi, ""),
-                count: $(b).find("span").text()
+                name: collection.Type,
+                count: collection.Point
             }
 
             collection_list.push(param)
-        })
+        }
 
         return collection_list
     },
-    profile_jewel: async($) => {
-        let param = {};
-        const jewel = $("div#profile-jewel > ul > li");
-        // const jewel2 = $("div#profile-jewel > div.jewel-effect__wrap > div.jewel__wrap > span");
+    profile_jewel: function(data) {
         const jewel_list = [];
+        // let count = 0
 
-        jewel.each(function(i, v) {
-            let jewel_name = $(v).find("div.jewel_effect > strong.skill_tit").text()
-            let effect = $(v).find("div.jewel_effect > p.skill_detail").text().split(jewel_name)[1].trim()
-            let type  = effect.split(" ")[0]
-            param = {
-                name: jewel_name,
-                effect: effect,
-                type: (type == "피해") ? "멸화" : "홍염",
-                level: $(v).find("div.jewel > span.jewel_level").text()
-            };
+        for(let Gems of data.Gems) {
+            for(let Effects of data.Effects){
+                if(Gems.Slot == Effects.GemSlot) {
+                    param = {
+                        name: Effects.Name,
+                        effect: Effects.Description,
+                        type: (Effects.Description.split(" ")[0] == "피해") ? "멸화" : "홍염",
+                        level: "Lv." + Gems.Level
+                    };
 
-            jewel_list.push(param)
-        })
+                    jewel_list.push(param)
+                }
+            }
+        }
 
         return jewel_list
     },

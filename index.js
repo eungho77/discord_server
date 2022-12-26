@@ -1,7 +1,7 @@
 var express = require('express');
 
 const cheerio = require('cheerio');
-const { server_port } = require('./config.json')
+const { server_port, url } = require('./config.json')
 const { parsing } = require('./html/pasing')
 const { logger } = require('./logger/logger')
 
@@ -10,122 +10,132 @@ const app = express();
 /* GET home page. */
 app.get('/api/info/:username/:nickname', async (req, res) => {
     let param = {}
-    const html = await parsing.getHtml("https://m-lostark.game.onstove.com/Profile/Character/" + req.params.nickname)
-    const $ = cheerio.load(html.data)
-
-    const image = await parsing.getHtml("https://lostark.game.onstove.com/Profile/Character/" + req.params.nickname)
-    const $1 = cheerio.load(image.data)
 
     // 서버 점검 알림
     const loa = await parsing.getHtml("https://m-lostark.game.onstove.com")
-    const $2 = cheerio.load(loa.data)
+    const $ = cheerio.load(loa.data)
 
-    const mode = $2( "head > title").text() != "로스트아크 - 서비스 점검" ? true : false
+    const mode = $( "head > title").text() != "로스트아크 - 서비스 점검" ? true : false
 
-    if(mode) {
-        param.nickname = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[1];
-        if(param.nickname) {
-            param.search = true
-            param.server = $("dd.myinfo__character > div.wrapper-define > dl.define:nth-child(1) > dd").text().split("@")[1] // 서버
-            param.job = $("dd.myinfo__character > div.wrapper-define > dl.define:nth-child(2) > dd").text() // 직업
-            param.expedition = $("div.myinfo__contents-level > div.wrapper-define:nth-child(1) > dl.define > dd.level").text() // 원정대
-            param.level = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[0] // 로스트아크 레벨
-            param.itemLevel = $("div.myinfo__contents-level > div.wrapper-define:nth-child(2) > dl.item > dd.level").text() // 장착 아이템
-            param.image = $1("#profile-equipment > div.profile-equipment__character > img").attr('src') // 장착 아이템
-            param.mode = mode
+    try {
+        if(mode) {
+            const loa_profile = await parsing.getData(url + "/armories/characters/" + req.params.nickname + "/profiles") // 기본 정보, 성향, 전투
+            const loa_skills = await parsing.getData(url + "/armories/characters/" + req.params.nickname + "/combat-skills") // 스킬
+            const loa_equipment = await parsing.getData(url + "/armories/characters/" + req.params.nickname + "/equipment") // 장비
+            const loa_avatars = await parsing.getData(url + "/armories/characters/" + req.params.nickname + "/avatars") // 아바타
+            const loa_engrave = await parsing.getData(url + "/armories/characters/" + req.params.nickname + "/engravings") // 각인
+            const loa_cards = await parsing.getData(url + "/armories/characters/" + req.params.nickname + "/cards") // 카드
+            const loa_gems = await parsing.getData(url + "/armories/characters/" + req.params.nickname + "/gems") // 보석
+            const loa_expand = await parsing.getData(url + "/characters/" + req.params.nickname + "/siblings") // 보유 캐릭터
+            const loa_collectibles = await parsing.getData(url + "/armories/characters/" + req.params.nickname + "/collectibles") // 수집품
 
-            let basic_array = parsing.profile_ability_basic($) // 최대 생명력, 전투 공격력
-            let battle_array = parsing.profile_ability_battle($) // 치명, 특화, 제압, 신속, 인내, 숙련
-            let engrave_array = parsing.profile_ability_engrave($) // 각인
-            let jewel_array = await parsing.profile_jewel($) // 카드
-            let card_array = parsing.card_tab($) // 카드
-            let expand_array = await parsing.expand_character_list($) // 보유 캐릭터
-
-            try {
-                // 기본 특성
-                param.basic = {
-                    attack: basic_array[0], // 전투 공격력
-                    hp: basic_array[1] // 최대 생명력
-                };
-
-                param.battle = battle_array
-                param.engrave = engrave_array // 각인 효과
-                param.card = card_array // 카드
-                param.expand = expand_array // 보유 캐릭터
-                param.jewel = jewel_array // 보석
-
-                logger.info('Discord 닉네임 : ' + req.params.username + '님이 [검색] "명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname.trim() + '] 조회 / 성공')
-                logger.debug(param)
-            } catch (e) {
-                logger.debug(e)
-            }
-
-
-        } else {
-            param.mode = mode;
-            param.search = false
-            param.content = "닉네임이 존재하지 않거나 잘못됬을 경우 닉네임까지 치고 스페이스바 한번 눌러서 날려보세요."
-
-            logger.error('Discord 닉네임 : ' + req.params.username + '님이 [검색] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname.trim() + '] 조회 / 닉네임 불일치')
-            logger.debug(param)
-        }
-    } else {
-        param.mode = mode
-        param.title = "서버 점검 중입니다."
-
-        logger.error('Discord 닉네임 : ' + req.params.username + '님이 [검색] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname.trim() + '] 조회 / 서버 점검')
-        logger.debug(param)
-    }
-
-    res.send(param)
-});
-
-app.get('/api/internal_stability/:username/:nickname', async (req, res) => {
-    const param = {};
-    const html = await parsing.getHtml("https://m-lostark.game.onstove.com/Profile/Character/" + req.params.nickname);
-    const $ = cheerio.load(html.data);
-
-    // 서버 점검 알림
-    const loa = await parsing.getHtml("https://m-lostark.game.onstove.com")
-    const $1 = cheerio.load(loa.data)
-
-    const mode = $1( "head > title").text() != "로스트아크 - 서비스 점검" ? true : false
-    if(mode) {
-        const nickname = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[1]
-        if(nickname) {
-            let life_arryy = parsing.profile_skill_life($) // 생활스킬
-            let collection_arary = await parsing.profile_collection(req.params.nickname)
-
-            try {
+            if(req.params.nickname === loa_profile.data.CharacterName) {
                 param.search = true
-                param.life = life_arryy // 생활스킬
-                param.collection = collection_arary
+                param.nickname = loa_profile.data.CharacterName // 닉네임
+                param.server = loa_profile.data.ServerName // 서버
+                param.guild = loa_profile.data.GuildName // 길드
+                param.townName = loa_profile.data.TownName // 영지 이름
+                param.townLevel = loa_profile.data.TownLevel // 영지 레벨
+                param.pvpLevel = loa_profile.data.PvpGradeName // pvp 레벨
+                param.job = loa_profile.data.CharacterClassName // 직업
+                param.expedition = loa_profile.data.ExpeditionLevel // 원정대 레벨
+                param.level = loa_profile.data.CharacterLevel // 로스트아크 평균 레벨
+                param.max_item_level = loa_profile.data.ItemMaxLevel // 로스트아크 최대 레벨
+                param.avg_item_level = loa_profile.data.ItemAvgLevel // 장착 아이템
+                param.image = loa_profile.data.CharacterImage // 장착 아이템
                 param.mode = mode
+                param.basic = { // 기본 특성
+                    attack : loa_profile.data.Stats[6].Value, // 공격력
+                    hp : loa_profile.data.Stats[7].Value // 체력
+                }
 
-                logger.info('Discord 닉네임 : ' + req.params.username + '님이 [내실] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname + '] 조회 / 성공')
-                logger.debug(collection_arary)
-            } catch (e) {
-                logger.debug(e)
+                try {
+                    param.battle = parsing.profile_battle(loa_profile.data.Stats) // 치명, 특화, 제압, 신속, 인내, 숙련
+                    param.tendencies = parsing.profile_tendencies(loa_profile.data.Tendencies) // 성향
+                    param.skills = parsing.profile_skills(loa_skills.data) // 스킬
+                    param.equipment = parsing.profile_equipment(loa_equipment.data) // 장비
+                    param.avatars = parsing.profile_avatars(loa_avatars.data) // 아바타
+                    param.engrave = parsing.profile_ability_engrave(loa_engrave.data) // 각인
+                    param.card = parsing.card_tab(loa_cards.data) // 카드
+                    param.expand = parsing.expand_character_list(loa_expand.data) // 보유 캐릭터
+                    param.collectibles = parsing.profile_collection(loa_collectibles.data) // 보유 캐릭터
+                    param.jewel = parsing.profile_jewel(loa_gems.data) // 보석
+
+                    // logger.info('Discord 닉네임 : ' + req.params.username + '님이 [검색] "명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname.trim() + '] 조회 / 성공')
+                    // logger.debug(param)
+                } catch (e) {
+                    console.log(e)
+                    // logger.debug(e)
+                }
+            } else {
+                param.mode = mode;
+                param.search = false
+                param.content = "닉네임이 존재하지 않거나 잘못됬을 경우 닉네임까지 치고 스페이스바 한번 눌러서 날려보세요."
+
+                logger.error('Discord 닉네임 : ' + req.params.username + '님이 [검색] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname.trim() + '] 조회 / 닉네임 불일치')
+                logger.debug(param)
             }
         } else {
             param.mode = mode
-            param.search = false
-            param.content = "닉네임이 존재하지 않거나 잘못됬을 경우 닉네임까지 치고 스페이스바 한번 눌러서 날려보세요."
+            param.title = "서버 점검 중입니다."
 
-            logger.error('Discord 닉네임 : ' + req.params.username + '님이 [내실] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname + '] 조회 / 닉네임 불일치')
+            logger.error('Discord 닉네임 : ' + req.params.username + '님이 [검색] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname.trim() + '] 조회 / 서버 점검')
             logger.debug(param)
-
         }
-    } else {
-        param.mode = mode
-        param.title = "서버 점검 중입니다."
-
-        logger.error('Discord 닉네임 : ' + req.params.username + '님이 [내실] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname + '] 조회 / 서버 점검')
-        logger.debug(param)
+    } catch (e) {
+        console.log(e)
     }
+
 
     res.send(param)
 });
+
+// app.get('/api/internal_stability/:username/:nickname', async (req, res) => {
+//     const param = {};
+//     const html = await parsing.getHtml("https://m-lostark.game.onstove.com/Profile/Character/" + req.params.nickname);
+//     const $ = cheerio.load(html.data);
+//
+//     // 서버 점검 알림
+//     const loa = await parsing.getHtml("https://m-lostark.game.onstove.com")
+//     const $1 = cheerio.load(loa.data)
+//
+//     const mode = $1( "head > title").text() != "로스트아크 - 서비스 점검" ? true : false
+//     if(mode) {
+//         const nickname = $("dd.myinfo__character > button.myinfo__character--button2").text().split(" ")[1]
+//         if(nickname) {
+//             let life_arryy = parsing.profile_skill_life($) // 생활스킬
+//             let collection_arary = await parsing.profile_collection(req.params.nickname)
+//
+//             try {
+//                 param.search = true
+//                 param.life = life_arryy // 생활스킬
+//                 param.collection = collection_arary
+//                 param.mode = mode
+//
+//                 logger.info('Discord 닉네임 : ' + req.params.username + '님이 [내실] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname + '] 조회 / 성공')
+//                 logger.debug(collection_arary)
+//             } catch (e) {
+//                 logger.debug(e)
+//             }
+//         } else {
+//             param.mode = mode
+//             param.search = false
+//             param.content = "닉네임이 존재하지 않거나 잘못됬을 경우 닉네임까지 치고 스페이스바 한번 눌러서 날려보세요."
+//
+//             logger.error('Discord 닉네임 : ' + req.params.username + '님이 [내실] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname + '] 조회 / 닉네임 불일치')
+//             logger.debug(param)
+//
+//         }
+//     } else {
+//         param.mode = mode
+//         param.title = "서버 점검 중입니다."
+//
+//         logger.error('Discord 닉네임 : ' + req.params.username + '님이 [내실] 명령어를 썼습니다. / 로스트아크 닉네임 : [' + req.params.nickname + '] 조회 / 서버 점검')
+//         logger.debug(param)
+//     }
+//
+//     res.send(param)
+// });
 
 app.get('/api/inven/timer/:username', async (req, res) => {
     let html = await parsing.getHtml("https://m.inven.co.kr/lostark/timer/");

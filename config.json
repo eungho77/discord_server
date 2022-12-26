@@ -1,3 +1,5 @@
 {
-  "server_port" : 3000
+  "server_port" : 3000,
+  "url" : "https://developer-lostark.game.onstove.com/",
+  "jmt_key" : "bearer {jmk_key}"
 }
